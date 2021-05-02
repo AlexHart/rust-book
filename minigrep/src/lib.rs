@@ -32,25 +32,36 @@ impl Config {
     }
 }
 
-fn search_internal<'a, F>(contents: &'a str,  filter_fun: F) -> Vec<(usize, &'a str)> 
+#[derive(Debug, PartialEq)]
+pub struct LineMatch<'a> {
+    line_number: usize,
+    line: &'a str,
+}
+
+fn search_internal<F>(contents: &str,  filter_fun: F) -> Vec<LineMatch> 
 where 
-    F: Fn(&(usize, &str)) -> bool
+    F: FnMut(&LineMatch) -> bool
 {
     contents
         .lines()
         .enumerate()
-        .map(|(i, line)| (i + 1, line))
+        .map(|(i, line)| {
+            LineMatch {
+                line_number: i + 1,
+                line: line
+            }
+        })
         .filter(filter_fun)
         .collect()
+ }
+
+pub fn search<'a>(query: &str, contents: &'a str) -> Vec<LineMatch<'a>> {
+    search_internal(contents, |lm| lm.line.contains(query))
 }
 
-pub fn search<'a>(query: &str, contents: &'a str) -> Vec<(usize, &'a str)> {
-    search_internal(contents, |(_, line)| line.contains(query))
-}
-
-pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<(usize, &'a str)> {
+pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<LineMatch<'a>> {
     let query = query.to_lowercase();
-    search_internal(contents, |(_, line)| line.to_lowercase().contains(&query))
+    search_internal(contents, |lm| lm.line.to_lowercase().contains(&query))
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -63,7 +74,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     };
 
     for line in results {
-        println!("Line {}:\t{}", line.0, line.1);
+        println!("Line {}:\t{}", line.line_number, line.line);
     }
 
     Ok(())
@@ -81,7 +92,7 @@ Rust:
 safe, fast, productive.
 Pick three.";
 
-        assert_eq!(vec![(2, "safe, fast, productive.")], search(query, contents));
+        assert_eq!(vec![LineMatch{ line_number: 2, line: "safe, fast, productive." }], search(query, contents));
     }
 
     #[test]
@@ -92,7 +103,7 @@ Rust:
 safe, fast, productive.
 Pick three.";
 
-        assert_eq!(Vec::<(usize, &str)>::new(), search(query, contents));
+        assert_eq!(Vec::<LineMatch>::new(), search(query, contents));
     }
 
     #[test]
@@ -105,7 +116,10 @@ Pick three elements.";
 
         assert_eq!(2, search(query, contents).len());
         assert_eq!(
-            vec![(1, "Rust:"), (2, "safe, fast, productive.")],
+            vec![
+                LineMatch{ line_number: 1, line: "Rust:"}, 
+                LineMatch{ line_number: 2, line: "safe, fast, productive." }
+            ],
             search(query, contents)
         )
     }
@@ -119,7 +133,10 @@ safe, fast, productive.
 Pick three.
 Duct tape.";
 
-        assert_eq!(vec![(2, "safe, fast, productive.")], search(query, contents));
+        assert_eq!(
+            vec![LineMatch{ line_number: 2, line: "safe, fast, productive." }], 
+            search(query, contents)
+        );
     }
 
     #[test]
@@ -132,7 +149,9 @@ Pick three.
 Trust me.";
 
         assert_eq!(
-            vec![(1, "Rust:"), (4, "Trust me.")],
+            vec![ 
+                LineMatch{ line_number: 1, line: "Rust:"}, 
+                LineMatch{ line_number: 4, line: "Trust me."}],
             search_case_insensitive(query, contents)
         );
     }
