@@ -8,12 +8,18 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &str> {
-        if args.len() < 3 {
-            return Err("Not enough arguments");
-        }
-        let query = args[1].clone();
-        let filename = args[2].clone();
+    pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
+        args.next();
+        
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string."),
+        };
+
+        let filename = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file name")
+        };
 
         // Get from env variable if is case sensitive.
         let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
@@ -26,30 +32,23 @@ impl Config {
     }
 }
 
-pub fn search<'a>(query: &str, contents: &'a str) -> Vec<(i32, &'a str)> {
-    let mut results = Vec::new();
-
-    let mut i = 0;
-    for line in contents.lines() {
-        i += 1;
-        if line.contains(&query) {
-            results.push((i, line));
-        }
-    }
-    results
+pub fn search<'a>(query: &str, contents: &'a str) -> Vec<(usize, &'a str)> {
+    contents
+        .lines()
+        .enumerate()
+        .map(|(i, line)| (i + 1, line))
+        .filter(|(_, line)| line.contains(query))
+        .collect()
 }
 
-pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<(i32, &'a str)> {
+pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<(usize, &'a str)> {
     let query = query.to_lowercase();
-    let mut results = Vec::new();
-    let mut i = 0;
-    for line in contents.lines() {
-        i += 1;
-        if line.to_lowercase().contains(&query) {
-            results.push((i, line));
-        }
-    }
-    results
+    contents
+        .lines()
+        .enumerate()
+        .map(|(i, line)| (i + 1, line))
+        .filter(|(_, line)| line.to_lowercase().contains(&query))
+        .collect()
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -62,7 +61,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     };
 
     for line in results {
-        println!("Line {}: {}", line.0, line.1);
+        println!("Line: {} {}", line.0, line.1);
     }
 
     Ok(())
