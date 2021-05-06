@@ -9,7 +9,7 @@ fn main() {
 
     print_jump();
     for x in &v {
-        println!("{}", x);
+        print!("{}\t", x);
     }
 
     print_jump();
@@ -30,7 +30,7 @@ fn main() {
     let cadenas = vec!["Здравствуйте", "Hola mundo! 😁✌", "नमस्ते"];
     for cadena in cadenas {
         println!("Esta es la cadena de texto: {} - {}", cadena, cadena.len());
-        print_chars_from_string(cadena.to_owned());
+        print_chars_from_string(cadena);
         print_jump();
     }
 
@@ -63,14 +63,29 @@ fn main() {
     //     }
     // }
     println!("Queue length: {}", q.len());
+
+    // Push to a string
+    let mut text = String::new();
+    text.push_str("Lorem");
+    text.push_str(" ");
+    text.push_str("impsum");
+
+    println!("String created with push_str: {}", text);
+    print_chars_from_string(&text);
+
+    println!();
 }
 
 fn print_jump() {
-    println!("----------");
+    println!("\r\n----------------------------------------");
 }
 
-fn print_chars_from_string(s: String) {
+fn print_chars_from_string(s: &str) {
     for c in s.chars() {
-        println!("{}", c);
+        if c != ' ' {
+            print!("{} ", c);
+        } else {
+            print!(" ");
+        }
     }
 }
