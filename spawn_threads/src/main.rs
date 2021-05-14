@@ -18,10 +18,39 @@ fn main() {
     handle.join().unwrap();
 
     let v = vec![1, 2, 3];
-    let handle = thread::spawn(move || {
+    let f = move || {
         println!("Here's a vector: {:?}", v);
-    });
+    };
+    let handle = thread::spawn(f);
+
     //drop(v);
     handle.join().unwrap();
 
+
+    // Thread that returns a value ---------------------------------
+    let handle = thread::spawn(|| {
+        let mut res = 0;
+        for i in 1..1_000 {
+            res += i;
+        };
+        res
+    });
+    let sum = handle.join().unwrap();
+    println!("Value calculated in another thread: {}", sum);
+
+    // Thread that returns a value and fails -----------------------
+    println!("");
+    let handle = thread::spawn(|| {
+        let mut res = 0;
+        for i in 1..1_000_000 {
+            res += i;
+        };
+        res
+    });
+    match handle.join() {
+        Ok(sum) => println!("Value calculated in another thread: {}", sum),
+        Err(err) => println!("There was an error on the spawned thread: {:?}", err)
+    }
+
+    println!("\r\nProgram finished!");
 }
