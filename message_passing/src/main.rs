@@ -70,8 +70,9 @@ fn main() {
 
     println!("Multiple producers example");
     let (tx, rx) = mpsc::channel();
-
     let tx1 = tx.clone();
+    let tx2 = tx.clone();
+
     thread::spawn(move || {
         let vals = vec![
             String::from("hi"),
@@ -82,7 +83,7 @@ fn main() {
 
         for val in vals {
             tx1.send(val).unwrap();
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(250));
         }
     });
 
@@ -96,7 +97,14 @@ fn main() {
 
         for val in vals {
             tx.send(val).unwrap();
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(100));
+        }
+    });
+
+    thread::spawn(move || {
+        for i in 1..11 {
+            tx2.send(i.to_string()).unwrap();
+            thread::sleep(Duration::from_millis(50));
         }
     });
 
