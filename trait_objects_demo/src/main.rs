@@ -1,4 +1,5 @@
-use trait_objects_demo::{WebPage, Html, Js};
+use std::cell::RefCell;
+use trait_objects_demo::{WebPage, Html, Js, Media};
 
 fn main() {
 
@@ -23,6 +24,11 @@ fn load_web_page_elements(web_page: &mut WebPage) {
         scripts: String::from("console.log('hello world');")
     }));
 
+    web_page.elements.push(Box::new(Media {
+        images: RefCell::new(vec!(
+            "/1.jpg".to_string(), 
+            "/2.jpg".to_string()))
+    }))
 }
 
 fn download_and_render_web_page(web_page: &WebPage) {
